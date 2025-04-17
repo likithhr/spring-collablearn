@@ -6,6 +6,10 @@ import com.likith.collablearn.entity.User;
 import com.likith.collablearn.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.ResponseEntity;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -19,9 +23,9 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public String registerUser(SignupRequest request) {
+    public ResponseEntity<?> registerUser(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            return "Error: Email already in use!";
+            return ResponseEntity.badRequest().body("Email already in use!");
         }
 
         User user = new User();
@@ -31,17 +35,25 @@ public class AuthService {
         user.setRole(request.getRole());
 
         userRepository.save(user);
-        return "User registered successfully!";
+        return ResponseEntity.ok("User registered successfully!");
     }
 
-    public String loginUser(LoginRequest request) {
+    public ResponseEntity<?> loginUser(LoginRequest request) {
         Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                return "Login successful!"; // Later replace with JWT token
+                // Create a mock token or use a real one later (JWT, etc.)
+                Map<String, Object> response = new HashMap<>();
+                response.put("token", "mock-token-for-now");  // TODO: Replace with actual JWT
+                response.put("role", user.getRole());
+                return ResponseEntity.ok(response);
             }
         }
-        return "Invalid email or password!";
+
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Invalid email or password!");
+        return ResponseEntity.status(401).body(error);
     }
 }
